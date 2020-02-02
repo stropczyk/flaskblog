@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '3f962c15cca6ee00866c8aa698953946'
 app.config['MONGO_DBNAME'] = 'flaskblog'
-app.config["MONGO_URI"] = "mongodb://guest:stropczyk@database-pjbt9.mongodb.net/test?retryWrites=true&w=majority"
+app.config["MONGO_URI"] = "mongodb+srv://guest:stropczyk@database-pjbt9.mongodb.net/test?retryWrites=true&w=majority"
 
 mongo = PyMongo(app)
 
@@ -40,7 +40,7 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         flash(f'Account created for {form.username.data}!', 'success')
-        if mongo.db.users.find({"username": form.username.data}) is None:
+        if mongo.db.users.find_one({"username": form.username.data}) == 'null':
             mongo.db.users.insert({
                 "username": form.username.data,
                 "email": form.email.data,
@@ -65,5 +65,4 @@ def login():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
