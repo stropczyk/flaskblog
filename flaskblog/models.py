@@ -2,8 +2,10 @@ from flaskblog import db, login_manager
 
 
 class User:
-    def __init__(self, username):
+    def __init__(self, username, email, image_file='default.jpg'):
         self.username = username
+        self.email = email
+        self.image_file = image_file
 
     @staticmethod
     def is_authenticated():
@@ -24,4 +26,4 @@ class User:
     def load_user(username):
         user = db.cx['flaskblog']['users'].find_one({"username": username})
         if user:
-            return User(username=user['username'])
+            return User(username=user['username'], email=user['email'])
