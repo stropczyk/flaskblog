@@ -1,3 +1,4 @@
+from datetime import datetime
 from flaskblog import db, login_manager
 
 
@@ -27,3 +28,9 @@ class User:
         user = db.cx['flaskblog']['users'].find_one({"username": username})
         if user:
             return User(username=user['username'], email=user['email'])
+
+
+class Post:
+    def __init__(self, title):
+        self.title = title
+        self.date_posted = datetime.utcnow()

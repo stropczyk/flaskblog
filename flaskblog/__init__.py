@@ -7,8 +7,7 @@ from flask_login import LoginManager
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = '3f962c15cca6ee00866c8aa698953946'
-app.config['MONGO_DBNAME'] = 'flaskblog'
-app.config["MONGO_URI"] = "mongodb+srv://guest:stropczyk@database-pjbt9.mongodb.net/test?retryWrites=true&w=majority"
+app.config["MONGO_URI"] = "mongodb+srv://guest:stropczyk@database-pjbt9.mongodb.net/flaskblog?retryWrites=true&w=majority"
 
 db = PyMongo(app)
 b_crypt = Bcrypt(app)

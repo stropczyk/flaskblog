@@ -1,5 +1,6 @@
 import os
 import secrets
+from PIL import Image
 from datetime import datetime
 from flask import render_template, url_for, flash, redirect, request
 from flaskblog import app, db, b_crypt
@@ -35,6 +36,27 @@ def logout():
 @app.route("/home")
 def home():
     posts = db.cx.flaskblog.posts.find()
+    image_file = url_for('static', filename='profile_pics/' + 'default.jpg')
+    # output = []
+    for post in posts:
+        post_author = post['author']
+        user = db.cx['flaskblog']['users'].find_one({"username": post_author})
+        if user['picture']:
+            image_file = user['picture']
+            # image_path = f"static/profile_pics/{user['picture']}"
+        else:
+            image_file = 'default.jpg'
+            # image_path = f"static/profile_pics/default.jpg"
+        post['image'] = image_file
+    #     output += {
+    #         'image': user['picture'],
+    #         'author': post['author'],
+    #         'date_posted': post['date_posted'],
+    #         'title': post['title'],
+    #         'content': post['content']
+    #     }
+    #     # print(type(post['image']))
+    #     print(type(post['image']))
     return render_template('home.html', posts=posts)
 
 
@@ -53,7 +75,8 @@ def register():
         db.cx.flaskblog.users.insert_one({
             "username": form.username.data,
             "email": form.email.data,
-            "password": hashed_password
+            "password": hashed_password,
+            "picture": None
         }
         )
         flash('Your account has been created! You are now able to log in.', 'success')
@@ -65,8 +88,12 @@ def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_extension = os.path.splitext(form_picture.filename)
     picture_filename = random_hex + f_extension
-    picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_filename)
-    form_picture.save(picture_path)
+    picture_path = os.path.join(app.root_path, r'static\profile_pics', picture_filename)
+
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
 
     return picture_filename
 
@@ -83,7 +110,6 @@ def account():
                 {'username': current_user.username},
                 {"$set": {'picture': picture_file}}
             )
-            current_user.image_file = picture_file
         db.cx['flaskblog']['users'].update_one(
             {'username': current_user.username},
             {"$set": {'username': form.username.data}}
@@ -98,10 +124,10 @@ def account():
         form.username.data = current_user.username
         form.email.data = current_user.email
     user = db.cx['flaskblog']['users'].find_one({"username": current_user.username})
- #   if user['picture']:
-  #      image_file = current_user.image_file
-   # else:
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+    if user['picture']:
+        image_file = url_for('static', filename='profile_pics/' + user['picture'])
+    else:
+        image_file = url_for('static', filename= 'profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account',
                            image_file=image_file, form=form)
 
@@ -114,7 +140,7 @@ def new_post():
         db.cx.flaskblog.posts.insert_one({
             "title": form.title.data,
             "content": form.content.data,
-#            "author": current_user,
+            "author": current_user.username,
             "date_posted": datetime.utcnow()
         }
         )
