@@ -1,10 +1,12 @@
 from datetime import datetime
-from flask import render_template, url_for, flash, redirect, request, abort
+from flask import render_template, url_for, flash, redirect, request, abort, jsonify
 from flaskblog import app, db, b_crypt
-from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, RequestResetForm, \
+    ResetPasswordForm
 from flaskblog.models import User, save_picture, get_next_sequence
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_paginate import Pagination, get_page_args
+from pymongo import ASCENDING
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -31,12 +33,29 @@ def logout():
 
 
 @app.route("/")
-@app.route("/home")
+@app.route("/home", methods=['GET', 'POST'])
 def home():
+    # form = PreviousNextPageForm()
+    #
+    # offset = 0
+    # limit = 5
+    #
+    # if request.method == 'POST':
+    #     if request.form['submit_button'] == 'Next':
+    #         offset += limit
+    #     elif request.form['submit_button'] == 'Previous':
+    #         offset = offset - limit
+
+    # starting_id = db.cx.flaskblog.posts.find().sort('_id', ASCENDING)
+    # last_id = starting_id[offset]['_id']
+
+    # posts = db.cx.flaskblog.posts.find({'_id': {'$gte': last_id}}).sort('_id', ASCENDING).limit(limit)
     posts = db.cx.flaskblog.posts.find()
+
     image_file = url_for('static', filename='profile_pics/' + 'default.jpg')
+
     output = []
-    total = 0
+
     for post in posts:
         post_author = post['author']
         user = db.cx['flaskblog']['users'].find_one({"username": post_author})
@@ -53,19 +72,8 @@ def home():
             'title': post['title'],
             'content': post['content']
         })
-        total += 1
-    # page = request.args.get('page', 1, type=int)
-    # per_page = 5
-    # search = False
-    # q = request.args.get('q')
-    # if q:
-    #     search = True
-    page, per_page, offset = get_page_args()
-    # print(total)
-    # output_for_render = output.limit(per_page).offset(offset)
-    pagination = Pagination(page=page, per_page=per_page, offset=offset, total=total,
-                            record_name='Posts', show_single_page=True)
-    return render_template('home.html', posts=output, page=page, per_page=per_page, pagination=pagination)
+
+    return render_template('home.html', posts=output)
 
 
 @app.route("/about")
@@ -201,4 +209,47 @@ def delete_post(post_id):
     )
     flash('Your post has been deleted!', 'success')
     return redirect(url_for('home'))
+
+
+@app.route("/posts/<string:user>")
+def user_posts(user):
+    posts = db.cx.flaskblog.posts.find({"author": user})
+    if not posts:
+        abort(404)
+    user = db.cx['flaskblog']['users'].find_one({"username": user})
+    image_file = url_for('static', filename='profile_pics/' + 'default.jpg')
+    if user['picture']:
+        image_file = user['picture']
+    elif user['picture'] is None:
+        image_file = 'default.jpg'
+
+    output = []
+    total = 0
+    for post in posts:
+        output.append({
+            '_id': post['_id'],
+            'image': image_file,
+            'author': user['username'],
+            'date_posted': post['date_posted'],
+            'title': post['title'],
+            'content': post['content']
+        })
+        total += 1
+
+    return render_template('user_posts.html', posts=output, user=user, total=total)
+
+
+@app.route("/reset_password", methods=['GET', 'POST'])
+def reset_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RequestResetForm()
+    return render_template('reset_request.html', title='Reset Password', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_token(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
 

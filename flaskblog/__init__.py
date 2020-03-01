@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint
+from flask import Flask
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
