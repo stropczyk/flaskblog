@@ -1,7 +1,7 @@
 import os
 import secrets
 from PIL import Image
-from flaskblog import db, login_manager, app, mail
+from flaskblog import db, login_manager, app
 
 
 class User:

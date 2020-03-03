@@ -25,7 +25,8 @@ app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER')
 app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')
 app.config['MAIL_SUPPRESS_SEND'] = False
-app.config['MAIL_DEBUG'] = True
+app.config['TESTING'] = False
+app.config['MAIL_DEFAULT_SENDER'] = 'noreply@stropczyk.com'
 mail = Mail(app)
 
 from flaskblog import routes

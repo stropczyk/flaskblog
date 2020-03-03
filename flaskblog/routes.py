@@ -1,12 +1,10 @@
 from datetime import datetime
-from flask import render_template, url_for, flash, redirect, request, abort, jsonify
-from flaskblog import app, db, b_crypt
+from flask import render_template, url_for, flash, redirect, request, abort
+from flaskblog import app, db, b_crypt, mail
 from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, RequestResetForm, \
     ResetPasswordForm
 from flaskblog.models import User, save_picture, get_next_sequence
 from flask_login import login_user, current_user, logout_user, login_required
-from flask_paginate import Pagination, get_page_args
-from pymongo import ASCENDING
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_mail import Message
 
@@ -258,7 +256,7 @@ def reset_request():
 def reset_token(token):
     if current_user.is_authenticated:
         return redirect(url_for('home'))
-    user = User.verify_reset_token(token)
+    user = verify_reset_token(token)
     if not user:
         flash('That is an invalid/expired token', 'warning')
         return redirect(url_for('reset_request'))
@@ -266,7 +264,7 @@ def reset_token(token):
     if form.validate_on_submit():
         hashed_password = b_crypt.generate_password_hash(form.password.data).decode('utf-8')
         db.cx.flaskblog.users.update_one(
-            {'username': user.username},
+            {'username': user['username']},
             {"$set": {'password': hashed_password}}
         )
         flash('Your password has been updated! You are now able to log in.', 'success')
@@ -293,12 +291,13 @@ def send_reset_email(user):
     new_user = db.cx['flaskblog']['users'].find_one({"username": user})
     token = get_reset_token(new_user['username'])
     message = Message('Password Reset Request',
-                      sender='noreply@flaskblog.com',
+                      sender='noreply@stropczyk.com',
                       recipients=[new_user['email']])
     message.body = f'''To reset your password, visit the following link:
 {url_for('reset_token', token=token, _external=True)}
 
 If you did not make this request then simply ignore this email and no changes will be made.
 '''
+    mail.send(message)
 
 
