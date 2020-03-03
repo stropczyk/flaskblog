@@ -7,6 +7,8 @@ from flaskblog.models import User, save_picture, get_next_sequence
 from flask_login import login_user, current_user, logout_user, login_required
 from flask_paginate import Pagination, get_page_args
 from pymongo import ASCENDING
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask_mail import Message
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -244,6 +246,11 @@ def reset_request():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     form = RequestResetForm()
+    if form.validate_on_submit():
+        user = db.cx.flaskblog.users.find_one({"email": form.email.data})
+        send_reset_email(user['username'])
+        flash('An email has been sent with instructions to reset your password.', 'info')
+        return redirect(url_for('login'))
     return render_template('reset_request.html', title='Reset Password', form=form)
 
 
@@ -251,5 +258,47 @@ def reset_request():
 def reset_token(token):
     if current_user.is_authenticated:
         return redirect(url_for('home'))
+    user = User.verify_reset_token(token)
+    if not user:
+        flash('That is an invalid/expired token', 'warning')
+        return redirect(url_for('reset_request'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        hashed_password = b_crypt.generate_password_hash(form.password.data).decode('utf-8')
+        db.cx.flaskblog.users.update_one(
+            {'username': user.username},
+            {"$set": {'password': hashed_password}}
+        )
+        flash('Your password has been updated! You are now able to log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('reset_token.html', title='Reset Password', form=form)
+
+
+def get_reset_token(user, expires_sec=1800):
+    new_user = db.cx['flaskblog']['users'].find_one({"username": user})
+    s = Serializer(app.config['SECRET_KEY'], expires_sec)
+    return s.dumps({'username': new_user['username']}).decode('utf-8')
+
+
+def verify_reset_token(token):
+    s = Serializer(app.config['SECRET_KEY'])
+    try:
+        username = s.loads(token)['username']
+    except:
+        return None
+    return db.cx['flaskblog']['users'].find_one({"username": username})
+
+
+def send_reset_email(user):
+    new_user = db.cx['flaskblog']['users'].find_one({"username": user})
+    token = get_reset_token(new_user['username'])
+    message = Message('Password Reset Request',
+                      sender='noreply@flaskblog.com',
+                      recipients=[new_user['email']])
+    message.body = f'''To reset your password, visit the following link:
+{url_for('reset_token', token=token, _external=True)}
+
+If you did not make this request then simply ignore this email and no changes will be made.
+'''
 
 

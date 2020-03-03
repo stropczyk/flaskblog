@@ -1,8 +1,7 @@
 import os
 import secrets
 from PIL import Image
-from flaskblog import db, login_manager, app
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flaskblog import db, login_manager, app, mail
 
 
 class User:
@@ -31,19 +30,6 @@ class User:
         user = db.cx['flaskblog']['users'].find_one({"username": username})
         if user:
             return User(username=user['username'], email=user['email'])
-
-    def get_reset_token(self, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'username': self.username}).decode('utf-8')
-
-    @staticmethod
-    def verify_reset_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
-        try:
-            username = s.loads(token)['username']
-        except:
-            return None
-        return db.cx['flaskblog']['users'].find_one({"username": username})
 
 
 def save_picture(form_picture):
