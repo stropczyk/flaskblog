@@ -6,16 +6,16 @@
           <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + post.image) }}">
           <div class="media-body">
             <div class="article-metadata">
-              <a class="mr-2" href="{{ url_for('user_posts', user=post.author) }}">{{ post.author }}</a>
+              <a class="mr-2" href="{{ url_for('users.user_posts', user=post.author) }}">{{ post.author }}</a>
               <small class="text-muted">{{ post.date_posted.strftime('%d-%m-%Y') }}</small>
             </div>
-            <h2><a class="article-title" href="{{ url_for('post', post_id=post._id) }}">{{ post.title }}</a></h2>
+            <h2><a class="article-title" href="{{ url_for('posts.post', post_id=post._id) }}">{{ post.title }}</a></h2>
             <p class="article-content">{{ post.content }}</p>
           </div>
       </article>
     {% endfor %}
-    <input type="submit" name="submit_button" value="Previous" href="{{ url_for('home') }}">
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('home') }}">Previous</a>
-    <input type="submit" name="submit_button" value="Next" href="{{ url_for('home') }}">
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('home') }}">Next</a>
+    <input type="submit" name="submit_button" value="Previous" href="{{ url_for('main.home') }}">
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('main.home') }}">Previous</a>
+    <input type="submit" name="submit_button" value="Next" href="{{ url_for('main.home') }}">
+    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('main.home') }}">Next</a>
 {% endblock content %}
