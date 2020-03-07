@@ -3,7 +3,8 @@ from flask import (render_template, url_for, flash,
 from flask_login import current_user, login_required
 from flaskblog import db
 from flaskblog.posts.forms import PostForm
-from flaskblog.models import get_next_sequence
+from flaskblog.posts.utils import send_notification
+from flaskblog.models import get_next_sequence, add_to_json
 from datetime import datetime
 
 posts = Blueprint('posts', __name__)
@@ -14,15 +15,26 @@ posts = Blueprint('posts', __name__)
 def new_post():
     form = PostForm()
     if form.validate_on_submit():
+        _id = get_next_sequence("userid")
         db.cx.flaskblog.posts.insert_one({
-            "_id": get_next_sequence("userid"),
+            "_id": _id,
             "title": form.title.data,
             "content": form.content.data,
             "author": current_user.username,
             "date_posted": datetime.utcnow()
         }
         )
+        if form.recipient.data:
+            recipients = form.recipient.data.split(' ')
+            send_notification(current_user.username, recipients)
         flash('Your post has been created!', 'success')
+        task = {
+            "_id": _id,
+            "title": form.title.data,
+            "content": form.content.data,
+            "author": current_user.username
+        }
+        add_to_json(task)
         return redirect(url_for('main.home'))
     return render_template('create_post.html', title='New Post', form=form)
 

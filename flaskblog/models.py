@@ -1,4 +1,5 @@
 from flaskblog import db, login_manager
+import json
 
 
 class User:
@@ -35,3 +36,13 @@ def get_next_sequence(name):
         update={"$inc": {"seq": 1}},
     )
     return new_id['seq']
+
+
+def add_to_json(task):
+    with open('flaskblog/posts.json') as old_file:
+        posts = json.load(old_file)
+    new_posts = posts
+    new_posts.append(task)
+
+    with open('flaskblog/posts.json', 'w') as new_file:
+        json.dump(new_posts, new_file)

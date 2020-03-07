@@ -32,6 +32,21 @@
                 {% endif %}
             </div>
         </fieldset>
+        <fieldset class="form-group">
+            <div class="form-group">
+                {{ form.recipient.label(class="form-control-label") }}
+                {% if form.recipient.errors %}
+                    {{ form.recipient(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.recipient.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.recipient(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+        </fieldset>
         <div class="form-group">
             {{ form.submit(class="btn btn-outline-info") }}
         </div>
