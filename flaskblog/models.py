@@ -31,11 +31,21 @@ class User:
 
 
 def get_next_sequence(name):
-    new_id = db.cx['flaskblog']['counters'].find_and_modify(
-        query={"_id": name},
-        update={"$inc": {"seq": 1}},
-    )
-    return new_id['seq']
+    _id = db.cx['flaskblog']['counters'].find_one()
+    # print(_id)
+    if not _id:
+        new_id = db.cx['flaskblog']['counters'].insert_one({
+            "_id": "userid",
+            "seq": 1
+        })
+        return 1
+    else:
+        old_id = db.cx['flaskblog']['counters'].find_and_modify(
+            query={"_id": name},
+            update={"$inc": {"seq": 1}},
+        )
+        new_id = db.cx['flaskblog']['counters'].find_one()
+        return new_id['seq']
 
 
 def add_to_json(task):
