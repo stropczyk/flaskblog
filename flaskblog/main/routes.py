@@ -23,8 +23,14 @@ def home():
             if offset < 0:
                 offset = 0
 
+    x = []
     all_posts = db.cx.flaskblog.posts.find().sort('_id', ASCENDING)
-    first_id = all_posts[offset]['_id']
+    for i in all_posts:
+        x.append(i)
+    if x:
+        first_id = x[offset]['_id']
+    else:
+        first_id = 0
 
     posts = db.cx.flaskblog.posts.find({'_id': {'$gte': first_id}}).sort('_id', ASCENDING).limit(per_page)
 
