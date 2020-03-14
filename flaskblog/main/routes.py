@@ -1,5 +1,6 @@
-from flask import url_for, render_template, Blueprint
+from flask import url_for, render_template, Blueprint, request
 from flaskblog import db
+from flask_pymongo import ASCENDING
 
 main = Blueprint('main', __name__)
 
@@ -7,7 +8,26 @@ main = Blueprint('main', __name__)
 @main.route("/")
 @main.route("/home", methods=['GET', 'POST'])
 def home():
-    posts = db.cx.flaskblog.posts.find()
+    per_page = 3
+    total = db.cx['flaskblog']['posts'].count()
+    if request.method == 'GET':
+        offset = 0
+    if request.method == 'POST':
+        old_offset = int(request.form['offset'])
+        if 'Next' in request.form:
+            offset = old_offset + per_page
+            if offset > total:
+                offset = old_offset
+        elif 'Previous' in request.form:
+            offset = old_offset - per_page
+            if offset < 0:
+                offset = 0
+
+    all_posts = db.cx.flaskblog.posts.find().sort('_id', ASCENDING)
+    first_id = all_posts[offset]['_id']
+
+    posts = db.cx.flaskblog.posts.find({'_id': {'$gte': first_id}}).sort('_id', ASCENDING).limit(per_page)
+
     image_file = url_for('static', filename='profile_pics/' + 'default.jpg')
     output = []
 
@@ -27,7 +47,8 @@ def home():
             'title': post['title'],
             'content': post['content']
         })
-    return render_template('home.html', posts=output)
+
+    return render_template('home.html', posts=output, offset=offset)
 
 
 @main.route("/about")

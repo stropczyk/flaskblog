@@ -13,8 +13,11 @@
           </div>
       </article>
     {% endfor %}
-    <input type="submit" name="submit_button" value="Previous" href="{{ url_for('main.home') }}">
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('main.home') }}">Previous</a>
-    <input type="submit" name="submit_button" value="Next" href="{{ url_for('main.home') }}">
-    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('main.home') }}">Next</a>
+    <form action="/home" method="post">
+	    <input type="submit" name="Previous" value="Previous">
+        <input type="submit" name="Next" value="Next">
+        <input type="hidden" name="offset" value="{{ offset }}">
+    </form>
+<!--    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('main.home') }}">Previous</a>-->
+<!--    <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('main.home') }}">Next</a>-->
 {% endblock content %}
